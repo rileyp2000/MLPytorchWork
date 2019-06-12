@@ -13,6 +13,7 @@ epsilon = .2
 q = Q(env)
 optimizer = torch.optim.Adam(q.parameters(), lr=1e-3)
 
+batch_size = 128
 rb = ReplayBuffer(1e5)
 
 def train():
@@ -25,7 +26,7 @@ def train():
             for a in range(1, env.action_space.n):
                 if q(s,a) > q(s, max_a):
                     max_a = a
-            a = max_a
+            a = int(max_a)
 
         s2, r, done, info = env.step(int(a))
         rb.store(s, a, r, s2, done)
@@ -35,8 +36,13 @@ def train():
         else:
             s = s2
 
+        update()
 
 
+
+def update():
+    s, a, r, s2, m = rb.sample(batch_size)
+    print(s.shape, a.shape, r.shape, s2.shape, m.shape)
 
 
 train()
