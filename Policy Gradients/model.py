@@ -18,7 +18,6 @@ class Policy(nn.Module):
     def forward(self, s):
         logits = self.actor(torch.FloatTensor(s))
         dist = Categorical(logits=logits)
-
         a = dist.sample().numpy()
 
         return a
