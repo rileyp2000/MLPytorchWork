@@ -27,14 +27,15 @@ net.zero_grad()
 target = torch.randn(10)
 #reshape
 target = target.view(1,-1)
-print("Target: {0}".format(target))
+#print("Target: {0}".format(target))
 criterion = nn.MSELoss()
-print(type(criterion))
+#print(type(criterion))
 def train():
     for i in range(0,100):
         optimizer.zero_grad()
         output = net(input)
-
+        print(output)
+        print(target)
         loss = criterion(output, target)
         print('Loss: {0}'.format(loss))
         loss.backward()
