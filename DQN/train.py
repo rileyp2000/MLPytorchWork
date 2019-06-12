@@ -10,6 +10,7 @@ from replay_buffer import *
 
 env = gym.make('CartPole-v1')
 epsilon = .2
+gamma = .99
 q = Q(env)
 optimizer = torch.optim.Adam(q.parameters(), lr=1e-3)
 
@@ -42,7 +43,13 @@ def train():
 
 def update():
     s, a, r, s2, m = rb.sample(batch_size)
-    print(s.shape, a.shape, r.shape, s2.shape, m.shape)
+    #print(s.shape, a.shape, r.shape, s2.shape, m.shape)
+    max_q = -999999
+    for a in range(1, env.action_space.n):
+        if q(s,a) > q(s, max_a):
+            max_a = a
+    a = int(max_a)
+    y = r + m*gamma*
 
 
 train()
