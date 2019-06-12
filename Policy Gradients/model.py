@@ -4,15 +4,15 @@ import torch.nn as nn
 from torch.distributions.categorical import Categorical
 
 class Policy(nn.Module):
-    def __init__(self):
+    def __init__(self, env):
         super(Policy, self).__init__()
 
         self.actor = nn.Sequential(
-            nn.Linear(4, 64),
+            nn.Linear(env.observation_space.shape[0], 64),
             nn.ELU(),
             nn.Linear(64, 64),
             nn.ELU(),
-            nn.Linear(64, 2)
+            nn.Linear(64, env.action_space.n)
         )
 
     def forward(self, s):

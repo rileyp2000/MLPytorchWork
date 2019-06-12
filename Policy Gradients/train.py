@@ -7,21 +7,30 @@ from history import *
 from visualize import *
 
 algo_name = 'VPG'
-num_episodes = 1000
+num_episodes = 2000
 update_iter = 10
 
 #Tracks the previous episodes to be used later
 history = History()
 #Simulation which we get data from
-env = gym.make('CartPole-v1')
+env = gym.make('LunarLander-v2')
 #Neural Network
-policy = Policy()
+policy = Policy(env)
 #Handles improvement of network
 optimizer = torch.optim.Adam(policy.parameters(), lr=1e-3)
 
 past_ep_rewards = []
 
-
+def demo():
+    s = env.reset()
+    while True:
+        env.render()
+        a = policy(s)
+        s, _, done, _ = env.step(a)
+        if done:
+            break
+    env.close()
+demo()
 def train():
     for ep in range(num_episodes):
         s = env.reset()
@@ -67,3 +76,4 @@ def train():
             update_viz(ep, sum(past_ep_rewards) / len(past_ep_rewards), algo_name)
             del past_ep_rewards[:]
 train()
+demo()
