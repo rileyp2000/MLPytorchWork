@@ -7,7 +7,7 @@ from history import *
 from visualize import *
 
 algo_name = 'VPG'
-num_episodes = 2000
+num_episodes = 5000
 update_iter = 10
 
 #Tracks the previous episodes to be used later
