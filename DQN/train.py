@@ -11,7 +11,7 @@ from visualize import *
 
 algo_name = 'DQN'
 env = gym.make('CartPole-v1')
-epsilon = .2
+epsilon = .01
 gamma = .99
 q = Q(env)
 optimizer = torch.optim.Adam(q.parameters(), lr=1e-3)
@@ -22,6 +22,7 @@ rb = ReplayBuffer(1e5)
 
 
 def train():
+    explore(10000)
     ep = 0
     while ep < max_ep:
         s = env.reset()
@@ -47,7 +48,7 @@ def train():
             update()
 
 
-
+#Updates the Q by taking the max action and then calculating the loss based on a target
 def update():
     s, a, r, s2, m = rb.sample(batch_size)
     #print(s.shape, a.shape, r.shape, s2.shape, m.shape)
@@ -59,7 +60,22 @@ def update():
     loss.backward()
     optimizer.step()
 
+#Explores the environment for the specified number of timesteps to improve the performance of the DQN
+def explore(timestep):
+    ts = 0
+    while ts < timestep:
+        s = env.reset()
+        while True:
+            with torch.no_grad():
+                    a = env.action_space.sample()
 
+            s2, r, done, info = env.step(int(a))
+            rb.store(s, a, r, s2, done)
+            ts += 1
+            if done:
+                break
+            else:
+                s = s2
 
 
 train()
