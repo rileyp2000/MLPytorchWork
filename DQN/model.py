@@ -7,12 +7,12 @@ class Q(nn.Module):
         super(Q, self).__init__()
 
         self.main = nn.Sequential(
-            nn.Linear(env.observation_space.shape[0] + 1, 64),
+            nn.Linear(env.observation_space.shape[0], 64),
             nn.ELU(),
             nn.Linear(64, 64),
             nn.ELU(),
-            nn.Linear(64, 1)
+            nn.Linear(64, env.action_space.n)
         )
 
-    def forward(self, s, a):
-        return self.main(torch.cat([torch.FloatTensor(s),torch.FloatTensor(a)], -1))
+    def forward(self, s):
+        return self.main(torch.FloatTensor(s))

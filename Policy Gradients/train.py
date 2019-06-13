@@ -7,13 +7,13 @@ from history import *
 from visualize import *
 
 algo_name = 'VPG'
-num_episodes = 5000
+num_episodes = 1000
 update_iter = 10
 
 #Tracks the previous episodes to be used later
 history = History()
 #Simulation which we get data from
-env = gym.make('LunarLander-v2')
+env = gym.make('CartPole-v1')
 #Neural Network
 policy = Policy(env)
 #Handles improvement of network
