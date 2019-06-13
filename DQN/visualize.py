@@ -15,7 +15,7 @@ def update_viz(ep, ep_reward, algo):
             win=algo,
             opts=dict(
                 title=algo,
-                fillarea=True
+                fillarea=False
             )
         )
     else:

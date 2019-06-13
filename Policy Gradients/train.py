@@ -76,4 +76,4 @@ def train():
             update_viz(ep, sum(past_ep_rewards) / len(past_ep_rewards), algo_name)
             del past_ep_rewards[:]
 train()
-demo()
+#demo()
