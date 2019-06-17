@@ -11,11 +11,9 @@ algo_name = 'A2C'
 
 max_steps = 100000
 num_steps = 128
-steps = 0
 
-gamma = .99
-epsilon = .1
-learn_rate = 2e-3
+gamma = .9
+learn_rate = 1e-3
 
 env = gym.make('CartPole-v1')
 history = History()
@@ -28,7 +26,7 @@ opt_C = torch.optim.Adam(critic.parameters(), lr=learn_rate)
 
 
 def train():
-    global steps
+    steps = 0
     s = env.reset()
     ep = 0
     while steps < max_steps:
@@ -48,7 +46,6 @@ def train():
                 s = s2
             n_s += 1
             steps += 1
-        n_s = 0
         #----------#
         #  Update  #
         #----------#
@@ -67,17 +64,25 @@ def train():
 
         #------Policy Loss and Update------#
         #Get advantage
-        advantage = returns - critic(s)
+
+        advantage = returns.unsqueeze(1) - critic(states)
+        mean = advantage.mean()
+        std = advantage.std() + 1e-6
+        advantage = (advantage - mean)/std
+
 
         logp = actor.get_log_p(states, actions)
-        policy_loss = -(logp * advantage).mean()
+
+        policy_loss = (-(logp.unsqueeze(1) * advantage)).mean()
 
         opt_A.zero_grad()
         policy_loss.backward()
         opt_A.step()
 
         #------Value Function loss and update------#
-        v = F.mse_loss(returns, critic(states).squeeze(1))
+        # print(returns.shape)
+        # quit(critic(states).shape)
+        v = F.mse_loss(returns.unsqueeze_(1), critic(states))
 
         opt_C.zero_grad()
         v.backward()

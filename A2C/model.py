@@ -26,8 +26,8 @@ class Actor(nn.Module):
         return a
 
     def get_action_probs(self, s):
-        s = self(s)
-        return F.softmax(self.main(s))
+        # s = self(s)
+        return F.softmax(self.main(torch.FloatTensor(s)))
 
     def get_log_p(self, s, a):
         logits = self.main(torch.FloatTensor(s))
@@ -55,14 +55,9 @@ class Critic(nn.Module):
     def forward(self, s):
         return self.main(torch.FloatTensor(s))
 
-        def get_state_value(self, s):
-            s = self(s)
-            return self.critic(s)
-
-
-
-
-
+    def get_state_value(self, s):
+        s = self(s)
+        return self.critic(s)
 
 
 class A2C(nn.Module):
