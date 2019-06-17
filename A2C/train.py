@@ -5,8 +5,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from model import *
 from history import History
+from visualize import *
 
-max_steps = 10000
+algo_name = 'A2C'
+
+max_steps = 100000
 num_steps = 128
 steps = 0
 
@@ -27,14 +30,19 @@ opt_C = torch.optim.Adam(critic.parameters(), lr=learn_rate)
 def train():
     global steps
     s = env.reset()
+    ep = 0
     while steps < max_steps:
         n_s = 0
+        ep_r = 0
         #Collecting trajectories
         while n_s < num_steps:
             a = actor(s)
             s2, r, done, _ = env.step(a)
             history.store(s, a, r, done)
+            ep_r += r
             if done:
+                update_viz(ep, ep_r, algo_name)
+                ep += 1
                 s = env.reset()
             else:
                 s = s2
