@@ -12,9 +12,7 @@ class Actor(nn.Module):
         self.main = nn.Sequential(
             nn.Linear(env.observation_space.shape[0],64),
             nn.ELU(),
-            nn.Linear(64,128),
-            nn.ELU(),
-            nn.Linear(128,64),
+            nn.Linear(64,64),
             nn.ELU(),
             nn.Linear(64, env.action_space.n)
         )
@@ -24,10 +22,6 @@ class Actor(nn.Module):
         dist = Categorical(logits=logits)
         a = dist.sample().numpy()
         return a
-
-    def get_action_probs(self, s):
-        # s = self(s)
-        return F.softmax(self.main(torch.FloatTensor(s)))
 
     def get_log_p(self, s, a):
         logits = self.main(torch.FloatTensor(s))
@@ -45,19 +39,13 @@ class Critic(nn.Module):
         self.main = nn.Sequential(
             nn.Linear(env.observation_space.shape[0],64),
             nn.ELU(),
-            nn.Linear(64,128),
-            nn.ELU(),
-            nn.Linear(128,64),
+            nn.Linear(64,64),
             nn.ELU(),
             nn.Linear(64, 1)
         )
 
     def forward(self, s):
         return self.main(torch.FloatTensor(s))
-
-    def get_state_value(self, s):
-        s = self(s)
-        return self.critic(s)
 
 
 class A2C(nn.Module):
