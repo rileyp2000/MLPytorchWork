@@ -4,36 +4,35 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions.categorical import Categorical
 
-class Actor(nn.Module):
+class PolicyGradient(nn.Module):
     def __init__(self,env):
-        super(Actor, self).__init__()
+        super(PolicyGradient, self).__init__()
 
         self.main = nn.Sequential(
-            nn.Linear(env.observation_space.shape[0],64),
+            nn.Linear(env.observation_space.shape[0], 64),
             nn.ELU(),
             nn.Linear(64,64),
             nn.ELU(),
-            nn.Linear(64, env.action_space.n),
-            nn.Tanh()
+            nn.Linear(64, env.action_space.shape[0]),
+            #nn.Tanh()
         )
 
     def forward(self, s):
-        a = self.main(torch.FloatTensor(s))
+        # a = self.main(torch.FloatTensor(s))
+        # return map(a, env.action_space.n)
         return self.main(torch.FloatTensor(s))
 
-
-class Critic(nn.Module):
+class Q(nn.Module):
     def __init__(self,env):
-        super(Critic, self).__init__()
+        super(Q, self).__init__()
 
         self.main = nn.Sequential(
-            nn.Linear(env.observation_space.shape[0],64),
+            nn.Linear(env.observation_space.shape[0] + env.action_space.shape[0],64),
             nn.ELU(),
             nn.Linear(64,64),
             nn.ELU(),
-            nn.Linear(64, env.action_space.n),
-            nn.Tanh()
+            nn.Linear(64, 1),
         )
 
-    def forward(self, s):
-        return self.main(torch.FloatTensor(s))
+    def forward(self, s, a):
+        return self.main(torch.cat([s,a],1))
