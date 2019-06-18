@@ -2,6 +2,7 @@ import gym
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 from model import *
 from replay_buffer import ReplayBuffer
 from visualize import *
@@ -35,7 +36,7 @@ def train():
         ep_r = 0
         while True:
             with torch.no_grad():
-                a = policy(s)
+                a = policy(s) + addNoise()
             s2, r, done, _ = env.step(a)
             rb.store(s,a,r,s2,done)
             ep_r += r
@@ -63,6 +64,9 @@ def explore(timestep):
             else:
                 s = s2
 
+def addNoise():
+    return np.random.normal(0,.15)
+
 def update():
     s, a, r, s2, m = rb.sample(batch_size)
     #print(s.shape, a.shape, r.shape, s2.shape, m.shape)
@@ -81,7 +85,6 @@ def update():
     q_optim.step()
 
     policy_loss = -(q(s, policy(s))).mean()
-
     pol_optim.zero_grad()
     policy_loss.backward()
     pol_optim.step()
