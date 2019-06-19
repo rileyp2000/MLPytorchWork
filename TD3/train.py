@@ -63,7 +63,7 @@ def update(up_ct):
 
     #Finds the max next action according to the policy then finds the min between the two q target networks
     with torch.no_grad():
-        max_next_a = policy_target(s2) + addNoise()
+        max_next_a = policy_target(s2) + np.clip(addNoise(), -.3,.3)
         q1_next_max = q1_target(s2, max_next_a)
         q2_next_max = q2_target(s2, max_next_a)
         min_q = torch.min(q1_next_max, q2_next_max)

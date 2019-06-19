@@ -65,7 +65,7 @@ def explore(timestep):
                 s = s2
 
 def addNoise():
-    return np.random.normal(0,.15)
+    return np.clip(np.random.normal(0,.15), -.3,.3)
 
 def update():
     s, a, r, s2, m = rb.sample(batch_size)
