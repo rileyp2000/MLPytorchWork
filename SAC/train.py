@@ -24,9 +24,13 @@ batch_size = 128
 policy = Policy(env)
 pol_optim = torch.optim.Adam(policy.parameters(), learn_rate)
 
-q = Q(env)
-q_target = deepcopy(q)
-q_optim = torch.optim.Adam(q.parameters(),lr=learn_rate)
+q1 = Q(env)
+q2 = deepcopy(q1)
+q1_target = deepcopy(q1)
+q2_target = deepcopy(q2)
+q1_optim = torch.optim.Adam(q1.parameters(),learn_rate)
+q2_optim = torch.optim.Adam(q2.parameters(), learn_rate)
+
 
 def train():
     explore(10000)
@@ -70,23 +74,37 @@ def update():
     a = a.squeeze().unsqueeze(1)
     with torch.no_grad():
         a2, p2 = policy.sample(s2)
-        y = r + m*gamma*(q_target(s2, a2) - alpha*p2)
-    q_loss = F.mse_loss(q(s, a), y)
+        q1_next_max = q1_target(s2, a2)
+        q2_next_max = q2_target(s2, a2)
+        min_q = torch.min(q1_next_max, q2_next_max)
+
+        y = r + m*gamma*(min_q - alpha*p2)
+
+    q1_loss = F.mse_loss(q1(s, a), y)
+    q2_loss = F.mse_loss(q2(s, a), y)
 
     #Update q and policy with backprop
-    q_optim.zero_grad()
-    q_loss.backward()
-    q_optim.step()
+    q1_optim.zero_grad()
+    q1_loss.backward()
+    q1_optim.step()
+
+    q2_optim.zero_grad()
+    q2_loss.backward()
+    q2_optim.step()
+
 
     new_a, p = policy.sample(s)
 
-    policy_loss = (alpha*p - q(s, new_a)).mean()
+    policy_loss = (alpha*p - q1(s, new_a)).mean()
+
     pol_optim.zero_grad()
     policy_loss.backward()
     pol_optim.step()
 
     #Update q_target and policy_target
-    for param, target_param in zip(q.parameters(), q_target.parameters()):
+    for param, target_param in zip(q1.parameters(), q1_target.parameters()):
+        target_param.data = target_param.data*tau + param.data*(1-tau)
+    for param, target_param in zip(q2.parameters(), q2_target.parameters()):
         target_param.data = target_param.data*tau + param.data*(1-tau)
 
 
