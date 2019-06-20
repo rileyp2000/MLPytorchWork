@@ -20,6 +20,7 @@ class PolicyGradient(nn.Module):
     def forward(self, s):
         # a = self.main(torch.FloatTensor(s))
         # return map(a, env.action_space.n)
+        #quit(self.main(torch.FloatStorage(s)))
         return self.main(torch.FloatTensor(s))
 
 class Q(nn.Module):
