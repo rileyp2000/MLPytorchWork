@@ -14,7 +14,7 @@ max_episode = 2000
 policy_delay = 2
 
 gamma = .9
-learn_rate = 1e-4
+learn_rate = 3e-4
 tau = .995
 
 env = gym.make('Pendulum-v0')

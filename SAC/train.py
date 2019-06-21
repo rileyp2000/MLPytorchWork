@@ -13,8 +13,8 @@ algo_name = 'SAC'
 max_episode = 2000
 
 gamma = .99
-alpha = .95
-learn_rate = 1e-4
+alpha = .1
+learn_rate = 3e-4
 tau = .995
 
 env = gym.make('Pendulum-v0')
@@ -47,6 +47,7 @@ def train():
 
             if done:
                 update_viz(ep, ep_r, algo_name)
+                print('Episode {}, reward {}'.format(ep, ep_r))
                 ep +=1
                 break
             else:
