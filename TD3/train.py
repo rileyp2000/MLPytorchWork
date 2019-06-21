@@ -10,16 +10,16 @@ from copy import deepcopy
 
 
 algo_name = 'TD3'
-max_episode = 2000
+max_episode = 1000
 policy_delay = 2
 
-gamma = .9
-learn_rate = 3e-4
+gamma = .99
+learn_rate = 1e-3
 tau = .995
 
 env = gym.make('Pendulum-v0')
 rb = ReplayBuffer(1e6)
-batch_size = 128
+batch_size = 100
 
 policy = PolicyGradient(env)
 policy_target = deepcopy(policy)
