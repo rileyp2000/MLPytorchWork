@@ -25,6 +25,7 @@ max_ep = 1000
 
 batch_size = 128
 rb = ReplayBuffer(1e6)
+human_rb = ReplayBuffer(1e4)
 
 #Training the network
 def train():

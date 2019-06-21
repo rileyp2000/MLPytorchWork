@@ -16,3 +16,21 @@ class Q(nn.Module):
 
     def forward(self, s):
         return self.main(torch.FloatTensor(s))
+
+class H(nn.Module):
+    def __init__(self, env):
+        super(H, self).__init__()
+
+        self.main = nn.Sequential(
+            nn.Linear(env.observation_space.shape[0],64),
+            nn.ELU(),
+            nn.Linear(64,16),
+            nn.ELU(),
+            nn.Linear(16,4),
+            nn.ELU(),
+            nn.Linear(4, 1)
+
+        )
+
+    def forward(self,s):
+        return self.main(torch.FloatTensor(s))
