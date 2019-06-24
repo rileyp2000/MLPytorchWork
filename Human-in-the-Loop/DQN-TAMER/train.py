@@ -9,12 +9,14 @@ from copy import deepcopy
 from model import Q,H
 from replay_buffer import ReplayBuffer, HumanReplayBuffer
 from visualize import *
+from humanFeedback import Human
 
 algo_name = 'DQN-TAMER'
 env = gym.make('LunarLander-v2')
 max_ep = 1000
 epsilon = .3
 gamma = .99
+human = Human()
 alpha_q = 1
 alpha_h = alpha_q
 
@@ -37,6 +39,7 @@ rb = ReplayBuffer(1e6)
 
 h_batch = 16
 human_rb = HumanReplayBuffer(1e4)
+local_batch = HumanReplayBuffer(1e3)
 
 #Training the network
 def train():
@@ -59,10 +62,12 @@ def train():
             s2, r, done, _ = env.step(a)
             rb.store(s, a, r, s2, done)
 
+            local_batch.store(s, a, h(s))
             #TODO: Collect human feedback from env
-            #If feedback provided, store f as that feedback
-            #otherwise, store 0 
-            human_rb.store(s, a, f)
+            #Pseudo human involvement
+            if random.random() < .15:
+                f = human.evaluate(s)
+                updateHLocal(f)
 
             ep_r += r
 
@@ -70,17 +75,13 @@ def train():
             if done:
                 update_viz(ep, ep_r, algo_name)
                 ep += 1
+                local_batch.reset()
                 break
             else:
                 s = s2
 
             update()
 
-def getFeedback():
-    if noFeedback:
-        return None
-    else:
-        return
 
 #Explores the environment for the specified number of timesteps to improve the performance of the DQN
 def explore(timestep):
@@ -118,9 +119,20 @@ def updateQ():
 
 #Updates the H network by taking the MSE of the H function and the actual feedback
 def updateH():
+    #If it is not a local update use the global "replay buffer"  to sample from
     s_h, a_h, f = human_rb.sample(h_batch)
-
     loss = F.mse_loss(h(s), f)
+    optim(loss, h_optim)
+
+#Updates the H network using the local batch
+def updateHLocal(f):
+    h_pred = local_batch.getHumanPred()
+    discounted = []
+    for i in reversed(range(len(h_pred))):
+        discounted[i] = h_pred[i] + discount
+        discount = discounted[i]*(gamma * .9)
+
+    loss = F.mse_loss(discounted, f)
     optim(loss, h_optim)
 
 #Optimizer encapsulation method
@@ -141,6 +153,7 @@ def updateTargets():
 
 #Deacys the epsilon and alpha_h values as the network steps through
 def decay():
+    global alpha_h, epsilon
     alpha_h *= .9999
     if epsilon > .1:
         epsilon *= .999
