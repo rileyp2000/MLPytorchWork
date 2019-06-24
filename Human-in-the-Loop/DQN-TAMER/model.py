@@ -26,9 +26,9 @@ class H(nn.Module):
             nn.ELU(),
             nn.Linear(64,16),
             nn.ELU(),
-            nn.Linear(16,4),
+            nn.Linear(16,16),
             nn.ELU(),
-            nn.Linear(4, 1)
+            nn.Linear(16, env.action_space.n)
 
         )
 

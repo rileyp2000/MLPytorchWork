@@ -34,3 +34,34 @@ class ReplayBuffer():
         transition = tuple(fix(x) for x in data)
         self.len = min(self.len + 1, self.maxSize)
         self.buffer.append(transition)
+
+
+
+class HumanReplayBuffer():
+    def __init__(self, size):
+        self.buffer = deque(maxlen=int(size))
+        self.maxSize = size
+        self.len = 0
+
+    def sample(self, count):
+        count = min(count, self.len)
+        batch = random.sample(self.buffer, count)
+
+        s_arr = torch.FloatTensor(np.array([arr[0] for arr in batch]))
+        a_arr = torch.FloatTensor(np.array([arr[1] for arr in batch]))
+        f_arr = torch.FloatTensor(np.array([arr[2] for arr in batch]))
+
+        return s_arr, a_arr.unsqueeze(1), f_arr.unsqueeze(1)
+
+    def len(self):
+        return self.len
+
+    def store(self, s, a, f):
+        def fix(x):
+            if not isinstance(x, np.ndarray): return np.array(x)
+            else: return x
+
+        data = [s, np.array(a,dtype=np.float64), r]
+        transition = tuple(fix(x) for x in data)
+        self.len = min(self.len + 1, self.maxSize)
+        self.buffer.append(transition)
