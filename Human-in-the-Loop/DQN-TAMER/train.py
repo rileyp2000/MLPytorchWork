@@ -20,7 +20,7 @@ gamma = .99
 human = Human()
 alpha_q = 1
 alpha_h = alpha_q
-random.seed(5714149178)
+random.seed(1388420)
 
 #Proportion of network you want to keep
 tau = .995
@@ -44,6 +44,7 @@ local_batch = History()
 
 #Training the network
 def train():
+    feed_ct = 0
     explore(10000)
     ep = 0
     while ep < max_ep:
@@ -65,10 +66,11 @@ def train():
 
             if not done:
                 local_batch.store(s, a, h(s))
-            if random.random() < .2:
                 f = human.evaluate(s)
                 if f != 0:
+                    print(str(feed_ct) + ' ' + str(f))
                     updateHLocal(f)
+                    feed_ct += 1
             ep_r += r
 
             #If it reaches a terminal state then break the loop and begin again, otherwise continue
@@ -101,8 +103,8 @@ def explore(timestep):
 def update():
 
     updateQ()
-    if human_rb.length() != 0:
-        updateH()
+    #if human_rb.length() != 0:
+        #updateH()
 
     updateTargets()
 

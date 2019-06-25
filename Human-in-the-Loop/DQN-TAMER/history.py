@@ -18,3 +18,4 @@ class History():
 
     def get_history(self):
         return self.states, self.actions, self.feedback
+#TODO add a way to change the feedback values for the storage that will work with global buffer
