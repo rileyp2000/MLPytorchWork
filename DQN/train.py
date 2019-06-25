@@ -11,11 +11,12 @@ from replay_buffer import *
 from visualize import *
 
 algo_name = 'DQN'
-env = gym.make('CartPole-v1')
+env = gym.make('LunarLander-v2')
 epsilon = .01
 gamma = .99
 #Proportion of network you want to keep
 tau = .995
+random.seed(5714149178)
 
 q = Q(env)
 q_target = deepcopy(q)
