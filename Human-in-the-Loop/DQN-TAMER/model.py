@@ -20,7 +20,6 @@ class Q(nn.Module):
 class H(nn.Module):
     def __init__(self, env):
         super(H, self).__init__()
-
         self.main = nn.Sequential(
             nn.Linear(env.observation_space.shape[0],64),
             nn.ELU(),

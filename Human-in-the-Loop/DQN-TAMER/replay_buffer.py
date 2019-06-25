@@ -53,7 +53,7 @@ class HumanReplayBuffer():
 
         return s_arr, a_arr.unsqueeze(1), f_arr.unsqueeze(1)
 
-    def len(self):
+    def length(self):
         return self.len
 
     def store(self, s, a, f):
@@ -65,10 +65,3 @@ class HumanReplayBuffer():
         transition = tuple(fix(x) for x in data)
         self.len = min(self.len + 1, self.maxSize)
         self.buffer.append(transition)
-
-    def reset():
-        self.buffer = deque(maxlen=int(x=maxSize))
-        self.len = 0
-
-    def getHumanPred():
-        return [arr[2] for arr in self.buffer]

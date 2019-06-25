@@ -8,6 +8,7 @@ from copy import deepcopy
 
 from model import Q,H
 from replay_buffer import ReplayBuffer, HumanReplayBuffer
+from history import History
 from visualize import *
 from humanFeedback import Human
 
@@ -19,7 +20,7 @@ gamma = .99
 human = Human()
 alpha_q = 1
 alpha_h = alpha_q
-
+random.seed(5714149178)
 
 #Proportion of network you want to keep
 tau = .995
@@ -39,7 +40,7 @@ rb = ReplayBuffer(1e6)
 
 h_batch = 16
 human_rb = HumanReplayBuffer(1e4)
-local_batch = HumanReplayBuffer(1e3)
+local_batch = History()
 
 #Training the network
 def train():
@@ -62,20 +63,18 @@ def train():
             s2, r, done, _ = env.step(a)
             rb.store(s, a, r, s2, done)
 
-            local_batch.store(s, a, h(s))
-            #TODO: Collect human feedback from env
-            #Pseudo human involvement
-            if random.random() < .15:
+            if not done:
+                local_batch.store(s, a, h(s))
+            if random.random() < .2:
                 f = human.evaluate(s)
-                updateHLocal(f)
-
+                if f != 0:
+                    updateHLocal(f)
             ep_r += r
 
             #If it reaches a terminal state then break the loop and begin again, otherwise continue
             if done:
                 update_viz(ep, ep_r, algo_name)
                 ep += 1
-                local_batch.reset()
                 break
             else:
                 s = s2
@@ -102,7 +101,8 @@ def explore(timestep):
 def update():
 
     updateQ()
-    updateH()
+    if human_rb.length() != 0:
+        updateH()
 
     updateTargets()
 
@@ -119,28 +119,38 @@ def updateQ():
 
 #Updates the H network by taking the MSE of the H function and the actual feedback
 def updateH():
-    #If it is not a local update use the global "replay buffer"  to sample from
+    #Use the global "replay buffer"  to sample from
     s_h, a_h, f = human_rb.sample(h_batch)
-    loss = F.mse_loss(h(s), f)
+    loss = F.mse_loss(h(s_h), f)
     optim(loss, h_optim)
 
 #Updates the H network using the local batch
 def updateHLocal(f):
-    h_pred = local_batch.getHumanPred()
-    discounted = []
-    for i in reversed(range(len(h_pred))):
-        discounted[i] = h_pred[i] + discount
-        discount = discounted[i]*(gamma * .9)
+    s, a, h_pred = local_batch.get_history()
+    # print("f: " + str(f))
+    # print(len(s))
+    discount = f * alpha_h
+    feedback_discounted = [0] * len(s)
 
-    loss = F.mse_loss(discounted, f)
+    for i in reversed(range(len(feedback_discounted))):
+        feedback_discounted[i] = discount
+        discount = feedback_discounted[i]*alpha_h
+
+    #print(feedback_discounted)
+
+    max_h, _ = h(s).max(dim=1, keepdim=True)
+    feedback_discounted = torch.FloatTensor(feedback_discounted)
+
+    loss = F.mse_loss(max_h.squeeze(), feedback_discounted)
+    #print(loss)
     optim(loss, h_optim)
 
 #Optimizer encapsulation method
 def optim(loss,optim):
     #Update q
-    q_optim.zero_grad()
+    optim.zero_grad()
     loss.backward()
-    optimizer.step()
+    optim.step()
 
 #Updates the target networks for H and Q
 def updateTargets():
