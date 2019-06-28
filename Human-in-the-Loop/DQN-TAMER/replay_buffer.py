@@ -61,7 +61,7 @@ class HumanReplayBuffer():
             if not isinstance(x, np.ndarray): return np.array(x)
             else: return x
 
-        data = [s, np.array(a,dtype=np.float64), r]
+        data = [s, np.array(a,dtype=np.float64), f]
         transition = tuple(fix(x) for x in data)
         self.len = min(self.len + 1, self.maxSize)
         self.buffer.append(transition)

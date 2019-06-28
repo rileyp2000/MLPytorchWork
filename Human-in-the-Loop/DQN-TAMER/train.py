@@ -12,15 +12,16 @@ from history import History
 from visualize import *
 from humanFeedback import Human
 
+random.seed(1388420)
+
 algo_name = 'DQN-TAMER'
 env = gym.make('LunarLander-v2')
 max_ep = 1000
 epsilon = .3
 gamma = .99
-human = Human()
+human = Human(1388420)
 alpha_q = 1
 alpha_h = alpha_q
-random.seed(1388420)
 
 #Proportion of network you want to keep
 tau = .995
@@ -60,17 +61,21 @@ def train():
                     adj_h = alpha_h * h(s)
                     a = int(np.argmax(adj_q + adj_h))
             decay()
+            if ep %  10 == 0:
+                print(ep, alpha_h)
             #Get the next state, reward, and info based on the chosen action
             s2, r, done, _ = env.step(a)
             rb.store(s, a, r, s2, done)
 
+            rand = random.random()
             if not done:
                 local_batch.store(s, a, h(s))
-                f = human.evaluate(s)
-                if f != 0:
-                    print(str(feed_ct) + ' ' + str(f))
-                    updateHLocal(f)
-                    feed_ct += 1
+                if rand < .3:
+                    f = human.evaluate(s)
+                    if f != 0:
+                        print(str(feed_ct) + ' ' + str(f))
+                        updateHLocal(f)
+                        feed_ct += 1
             ep_r += r
 
             #If it reaches a terminal state then break the loop and begin again, otherwise continue
@@ -103,8 +108,8 @@ def explore(timestep):
 def update():
 
     updateQ()
-    #if human_rb.length() != 0:
-        #updateH()
+    if human_rb.length() != 0:
+        updateH()
 
     updateTargets()
 
@@ -121,9 +126,11 @@ def updateQ():
 
 #Updates the H network by taking the MSE of the H function and the actual feedback
 def updateH():
-    #Use the global "replay buffer"  to sample from
+
     s_h, a_h, f = human_rb.sample(h_batch)
-    loss = F.mse_loss(h(s_h), f)
+
+    max_h, _ = h_target(s_h).max(dim=1, keepdim=True)
+    loss = F.mse_loss(max_h.squeeze(), f.squeeze())
     optim(loss, h_optim)
 
 #Updates the H network using the local batch
@@ -140,12 +147,17 @@ def updateHLocal(f):
 
     #print(feedback_discounted)
 
-    max_h, _ = h(s).max(dim=1, keepdim=True)
+    max_h, _ = h_target(s).max(dim=1, keepdim=True)
     feedback_discounted = torch.FloatTensor(feedback_discounted)
 
+    #TODO: Check the shapes of these tensors
     loss = F.mse_loss(max_h.squeeze(), feedback_discounted)
-    #print(loss)
     optim(loss, h_optim)
+
+    for i, j, k in zip(s, a, feedback_discounted):
+        human_rb.store(i, j, k)
+
+    local_batch.clear()
 
 #Optimizer encapsulation method
 def optim(loss,optim):
