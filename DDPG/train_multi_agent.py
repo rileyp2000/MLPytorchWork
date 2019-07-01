@@ -20,8 +20,8 @@ env = SubprocVecEnv([make_env() for _ in range(num_actors)])
 algo_name = 'DDPG Multi-Agent'
 max_ts = 100000
 
-gamma = .9
-learn_rate = 1e-4
+gamma = .99
+learn_rate = 3e-4
 tau = .995
 
 rb = ReplayBuffer(1e6, True)
@@ -37,7 +37,7 @@ q_optim = torch.optim.Adam(q.parameters(),lr=learn_rate)
 
 def train():
     s = env.reset()
-    #explore(10000)
+    explore(10000)
     ep_r = np.zeros(num_actors)
     ep_r_final = np.zeros(num_actors)
     ts = 0
@@ -45,6 +45,7 @@ def train():
         with torch.no_grad():
             a = policy(s) + addNoise()
         s2, r, done, _ = env.step(a)
+        #print(s.shape, s2.shape, a.shape, r.shape, done.shape)
         rb.store(s,a,r,s2,done)
         ep_r += r
         ts += 1
@@ -52,7 +53,7 @@ def train():
         mask = 1 - done
         ep_r_final = (ep_r_final * mask) + (done * ep_r)
         ep_r *= mask
-        if ts % 10 == 0:
+        if ts % 200 == 0:
             update_viz(ts, ep_r_final, algo_name)
 
         s = s2
@@ -60,25 +61,20 @@ def train():
 
 #Explores the environment for the specified number of timesteps to improve the performance of the DQN
 def explore(timestep):
-    ts = 0
-    while ts < timestep:
+    #print('Exploring...')
+    for ts in range(timestep):
         s = env.reset()
-        while True:
-            a = env.action_space.sample()
-            s2, r, done, _ = env.step(a)
-            rb.store(s, a, r, s2, done)
-            ts += 1
-            if done:
-                break
-            else:
-                s = s2
+        a = np.stack([env.action_space.sample() for i in range(num_actors)])
+        s2, r, done, _ = env.step(a)
+        rb.store(s, a, r, s2, done)
+        s = s2
 
 def addNoise():
     return np.clip(np.random.normal(0,.15), -.3,.3)
 
 def update():
     s, a, r, s2, m = rb.sample(batch_size)
-
+    #print(s.shape, s2.shape, a.shape, r.shape, m.shape)
     with torch.no_grad():
         max_next_a = policy_target(s2)
         y = r + m*gamma*q_target(s2, max_next_a)

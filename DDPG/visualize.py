@@ -15,7 +15,13 @@ def update_viz(ep, ep_reward, algo):
             win=algo,
             opts=dict(
                 title=algo,
-                fillarea=False
+                xlabel='Timesteps',
+                ylabel='Episodic Reward',
+                fillarea=False,
+                markers=True,
+                markersize=4,
+                dash=np.array(['dot', 'dot', 'dot','dot']),
+                opacity=.25
             )
         )
     else:
@@ -23,5 +29,18 @@ def update_viz(ep, ep_reward, algo):
             X=np.array([ep]),
             Y=np.array([ep_reward]),
             win=win,
+            # name='all',
             update='append'
+        )
+        viz.line(
+            X=np.array([ep]),
+            Y=np.array([ep_reward.mean()]),
+            win=win,
+            name='mean',
+            update='append',
+            opts=dict(
+                fillarea=False,
+                markers=True,
+                markersize=7
+            )
         )
