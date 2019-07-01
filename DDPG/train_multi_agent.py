@@ -7,47 +7,56 @@ from model import *
 from replay_buffer import ReplayBuffer
 from visualize import *
 from copy import deepcopy
+from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
 
+def make_env():
+    def _f():
+        return gym.make('Pendulum-v0')
+    return _f
 
-algo_name = 'Single DDPG'
-max_episode = 2000
+num_actors = 4
+env = SubprocVecEnv([make_env() for _ in range(num_actors)])
+
+algo_name = 'DDPG Multi-Agent'
+max_ts = 100000
 
 gamma = .9
 learn_rate = 1e-4
 tau = .995
 
-env = gym.make('Pendulum-v0')
-rb = ReplayBuffer(1e6, False)
+rb = ReplayBuffer(1e6, True)
 batch_size = 128
 
 policy = PolicyGradient(env)
 policy_target = deepcopy(policy)
 pol_optim = torch.optim.Adam(policy.parameters(), learn_rate)
 
-q = Q(env,False)
+q = Q(env, True)
 q_target = deepcopy(q)
 q_optim = torch.optim.Adam(q.parameters(),lr=learn_rate)
 
 def train():
-    explore(10000)
-    ep = 0
-    while ep < max_episode:
-        s = env.reset()
-        ep_r = 0
-        while True:
-            with torch.no_grad():
-                a = policy(s) + addNoise()
-            s2, r, done, _ = env.step(a)
-            rb.store(s,a,r,s2,done)
-            ep_r += r
+    s = env.reset()
+    #explore(10000)
+    ep_r = np.zeros(num_actors)
+    ep_r_final = np.zeros(num_actors)
+    ts = 0
+    while ts < max_ts:
+        with torch.no_grad():
+            a = policy(s) + addNoise()
+        s2, r, done, _ = env.step(a)
+        rb.store(s,a,r,s2,done)
+        ep_r += r
+        ts += 1
 
-            if done:
-                update_viz(ep, ep_r, algo_name)
-                ep +=1
-                break
-            else:
-                s = s2
-            update()
+        mask = 1 - done
+        ep_r_final = (ep_r_final * mask) + (done * ep_r)
+        ep_r *= mask
+        if ts % 10 == 0:
+            update_viz(ts, ep_r_final, algo_name)
+
+        s = s2
+        update()
 
 #Explores the environment for the specified number of timesteps to improve the performance of the DQN
 def explore(timestep):
@@ -69,10 +78,7 @@ def addNoise():
 
 def update():
     s, a, r, s2, m = rb.sample(batch_size)
-    #print(s.shape, a.shape, r.shape, s2.shape, m.shape)
-    a = a.squeeze().unsqueeze(1)
-    #print(s.shape, a.shape, r.shape, s2.shape, m.shape)
-    # quit()
+
     with torch.no_grad():
         max_next_a = policy_target(s2)
         y = r + m*gamma*q_target(s2, max_next_a)

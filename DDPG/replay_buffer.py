@@ -5,10 +5,11 @@ from collections import deque
 
 
 class ReplayBuffer():
-    def __init__(self, size):
+    def __init__(self, size, multi):
         self.buffer = deque(maxlen=int(size))
         self.maxSize = size
         self.len = 0
+        self.mult = multi
 
     def sample(self, count):
         count = min(count, self.len)
@@ -20,7 +21,10 @@ class ReplayBuffer():
         s2_arr = torch.FloatTensor(np.array([arr[3] for arr in batch]))
         m_arr = torch.FloatTensor(np.array([arr[4] for arr in batch]))
 
-        return s_arr, a_arr.unsqueeze(1), r_arr.unsqueeze(1), s2_arr, m_arr.unsqueeze(1)
+        if self.mult:
+            return s_arr, a_arr, r_arr.unsqueeze(2), s2_arr, m_arr.unsqueeze(2)
+        else:
+            return s_arr, a_arr.unsqueeze(1), r_arr.unsqueeze(1), s2_arr, m_arr.unsqueeze(1)
 
     def len(self):
         return self.len

@@ -7,7 +7,6 @@ from torch.distributions.categorical import Categorical
 class PolicyGradient(nn.Module):
     def __init__(self,env):
         super(PolicyGradient, self).__init__()
-
         self.main = nn.Sequential(
             nn.Linear(env.observation_space.shape[0], 64),
             nn.ELU(),
@@ -24,9 +23,9 @@ class PolicyGradient(nn.Module):
         return self.main(torch.FloatTensor(s))
 
 class Q(nn.Module):
-    def __init__(self,env):
+    def __init__(self,env, isMulti):
         super(Q, self).__init__()
-
+        self.multi = isMulti
         self.main = nn.Sequential(
             nn.Linear(env.observation_space.shape[0] + env.action_space.shape[0],64),
             nn.ELU(),
@@ -36,4 +35,7 @@ class Q(nn.Module):
         )
 
     def forward(self, s, a):
-        return self.main(torch.cat([s,a],1))
+        if self.multi:
+            return self.main(torch.cat([s,a],2))
+        else:
+            return self.main(torch.cat([s,a],1))
