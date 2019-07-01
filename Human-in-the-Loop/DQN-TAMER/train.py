@@ -32,25 +32,26 @@ q_target = deepcopy(q)
 h = H(env)
 h_target = deepcopy(h)
 
-q_optim = torch.optim.Adam(q.parameters(), lr=1e-2)
-h_optim = torch.optim.Adam(h.parameters(), lr=1e-2)
+q_optim = torch.optim.Adam(q.parameters(), lr=1e-3)
+h_optim = torch.optim.Adam(h.parameters(), lr=1e-3)
 
 
 batch_size = 128
 rb = ReplayBuffer(1e6)
 
 h_batch = 16
-human_rb = HumanReplayBuffer(1e4)
-local_batch = History()
+human_rb = HumanReplayBuffer(1e6)
+local_batch = History(1e3)
 
 #Training the network
 def train():
     feed_ct = 0
-    explore(10000)
+    explore(1e4)
     ep = 0
     while ep < max_ep:
         s = env.reset()
         ep_r = 0
+        fr = 0
         while True:
             with torch.no_grad():
                 #Epsilon greedy exploration
@@ -61,14 +62,20 @@ def train():
                     adj_h = alpha_h * h(s)
                     a = int(np.argmax(adj_q + adj_h))
             decay()
-            if ep %  10 == 0:
+            if fr == 0:
                 print(ep, alpha_h)
             #Get the next state, reward, and info based on the chosen action
             s2, r, done, _ = env.step(a)
             rb.store(s, a, r, s2, done)
 
             rand = random.random()
-            if not done:
+            ep_r += r
+            #If it reaches a terminal state then break the loop and begin again, otherwise continue
+            if done:
+                update_viz(ep, ep_r, algo_name)
+                ep += 1
+                break
+            else:
                 local_batch.store(s, a, h(s))
                 if rand < .3:
                     f = human.evaluate(s)
@@ -76,15 +83,8 @@ def train():
                         print(str(feed_ct) + ' ' + str(f))
                         updateHLocal(f)
                         feed_ct += 1
-            ep_r += r
-
-            #If it reaches a terminal state then break the loop and begin again, otherwise continue
-            if done:
-                update_viz(ep, ep_r, algo_name)
-                ep += 1
-                break
-            else:
                 s = s2
+                fr += 1
 
             update()
 
@@ -136,8 +136,6 @@ def updateH():
 #Updates the H network using the local batch
 def updateHLocal(f):
     s, a, h_pred = local_batch.get_history()
-    # print("f: " + str(f))
-    # print(len(s))
     discount = f * alpha_h
     feedback_discounted = [0] * len(s)
 
@@ -145,12 +143,11 @@ def updateHLocal(f):
         feedback_discounted[i] = discount
         discount = feedback_discounted[i]*alpha_h
 
-    #print(feedback_discounted)
-
     max_h, _ = h_target(s).max(dim=1, keepdim=True)
     feedback_discounted = torch.FloatTensor(feedback_discounted)
 
-    #TODO: Check the shapes of these tensors
+    # print(max_h.squeeze().shape)
+    # print(feedback_discounted.shape)
     loss = F.mse_loss(max_h.squeeze(), feedback_discounted)
     optim(loss, h_optim)
 

@@ -33,3 +33,4 @@ class H(nn.Module):
 
     def forward(self,s):
         return self.main(torch.FloatTensor(s))
+        #TODO See if the network needs to actually return the binary feedback for the state versus the probability of actions
