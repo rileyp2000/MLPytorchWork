@@ -48,6 +48,7 @@ def train():
             ep_r += r
 
             if done:
+                print("Episode: {epi}; Episodic Reward: {epi_r}".format(epi=ep, epi_r=ep_r))
                 update_viz(ep, ep_r, algo_name)
                 ep +=1
                 break
