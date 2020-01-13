@@ -15,7 +15,9 @@ def update_viz(ep, ep_reward, algo):
             win=algo,
             opts=dict(
                 title=algo,
-                fillarea=False
+                fillarea=False,
+                xlabel='Episodes',
+                ylabel='Reward'
             )
         )
     else:

@@ -25,7 +25,7 @@ policy = Policy(env)
 pol_optim = torch.optim.Adam(policy.parameters(), learn_rate)
 
 q1 = Q(env)
-q2 = deepcopy(q1)
+q2 = Q(env)
 q1_target = deepcopy(q1)
 q2_target = deepcopy(q2)
 q1_optim = torch.optim.Adam(q1.parameters(),learn_rate)
@@ -47,7 +47,7 @@ def train():
 
             if done:
                 update_viz(ep, ep_r, algo_name)
-                #print('Episode {}, reward {}'.format(ep, ep_r))
+                print('Episode {}, reward {}'.format(ep, ep_r))
                 ep +=1
                 break
             else:

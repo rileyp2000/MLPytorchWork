@@ -6,11 +6,12 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-gym = "*"
+gym = {extras = ["box2d"],version = "*"}
 numpy = "*"
 torch = "*"
 torchvision = "*"
 visdom = "*"
+pillow = "==6.1"
 
 [requires]
 python_version = "3.7"

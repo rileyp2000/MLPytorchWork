@@ -23,5 +23,7 @@ def update_viz(ep, ep_reward, algo):
             X=np.array([ep]),
             Y=np.array([ep_reward]),
             win=win,
-            update='append'
+            update='append',
+            xaxis='Episodes',
+            yaxis='Reward'
         )
