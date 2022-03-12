@@ -11,7 +11,7 @@ numpy = "*"
 torch = "*"
 torchvision = "*"
 visdom = "*"
-pillow = "==6.1"
+pillow = "==9.0.1"
 
 [requires]
 python_version = "3.7"
